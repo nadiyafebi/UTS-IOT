@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Sensor IoT</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: #e8eaf6;
+      color: #333;
+      padding: 20px;
+      min-height: 100vh;
+    }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #1a237e;
+      font-size: 2em;
+      margin-bottom: 25px;
+    }
+    
+    .controls {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    
+    button {
+      margin: 8px;
+      padding: 12px 30px;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: 600;
+      transition: opacity 0.2s;
+    }
+    
+    .on { 
+      background: #2e7d32;
+    }
+    
+    .off { 
+      background: #c62828;
+    }
+    
+    button:hover {
+      opacity: 0.9;
+    }
+    
+    .info-box {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin: 25px 0;
+      flex-wrap: wrap;
+    }
+    
+    .card {
+      background: white;
+      padding: 20px 25px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-align: center;
+      width: 200px;
+      border-left: 4px solid #3f51b5;
+    }
+    
+    .card h2 {
+      margin: 8px 0;
+      font-size: 2em;
+      color: #3f51b5;
+      font-weight: 600;
+    }
+    
+    .card p {
+      color: #666;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+    
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 25px;
+    }
+    
+    .chart-container {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-top: 25px;
+    }
+    
+    .charts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 25px;
+    }
+    
+    .chart-box {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .chart-box h3 {
+      margin-bottom: 15px;
+    }
+    
+    h3 {
+      color: #1a237e;
+      margin-bottom: 15px;
+      font-size: 1.3em;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #e0e0e0;
+    }
+    
+    th {
+      background: #3f51b5;
+      color: white;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+    
+    tbody tr:hover {
+      background: #f5f5f5;
+    }
+    
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+    
+    td {
+      color: #555;
+    }
+    
+    @media (max-width: 768px) {
+      h1 {
+        font-size: 1.5em;
+      }
+      
+      .info-box {
+        gap: 10px;
+      }
+      
+      .card {
+        width: calc(33.33% - 10px);
+        min-width: 100px;
+        padding: 15px 10px;
+      }
+      
+      .card h2 {
+        font-size: 1.5em;
+      }
+      
+      .card p {
+        font-size: 0.75em;
+      }
+      
+      button {
+        padding: 10px 25px;
+        font-size: 14px;
+      }
+      
+      table {
+        font-size: 0.85em;
+      }
+      
+      th, td {
+        padding: 8px 5px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Dashboard Sensor IoT</h1>
+
+    <div class="controls">
+      <button class="on" onclick="kontrolPompa('ON')">Pompa ON</button>
+      <button class="off" onclick="kontrolPompa('OFF')">Pompa OFF</button>
+    </div>
+
+    <div class="info-box">
+      <div class="card">
+        <h2 id="maxSuhu">--</h2>
+        <p>Suhu Maksimum (°C)</p>
+      </div>
+      <div class="card">
+        <h2 id="minSuhu">--</h2>
+        <p>Suhu Minimum (°C)</p>
+      </div>
+      <div class="card">
+        <h2 id="rataSuhu">--</h2>
+        <p>Suhu Rata-rata (°C)</p>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <h3>Data Sensor Terbaru</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Suhu (°C)</th>
+            <th>Kelembapan (%)</th>
+            <th>Kecerahan (lux)</th>
+            <th>Waktu</th>
+          </tr>
+        </thead>
+        <tbody id="dataTable"></tbody>
+      </table>
+    </div>
+
+    <div class="charts-grid">
+      <div class="chart-box">
+        <h3>Grafik Suhu</h3>
+        <canvas id="suhuChart"></canvas>
+      </div>
+      <div class="chart-box">
+        <h3>Grafik Kelembapan</h3>
+        <canvas id="humidityChart"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <h3>Grafik Kecerahan</h3>
+      <canvas id="luxChart"></canvas>
+    </div>
+  </div>
+
+  <script>
+    let suhuChart, humidityChart, luxChart;
+    
+    // Inisialisasi grafik
+    function initCharts() {
+      // Grafik Suhu
+      const suhuCtx = document.getElementById('suhuChart').getContext('2d');
+      suhuChart = new Chart(suhuCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Suhu (°C)',
+            data: [],
+            borderColor: '#3f51b5',
+            backgroundColor: 'rgba(63, 81, 181, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: false
+            }
+          }
+        }
+      });
+
+      // Grafik Kelembapan
+      const humidityCtx = document.getElementById('humidityChart').getContext('2d');
+      humidityChart = new Chart(humidityCtx, {
+        type: 'line',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Kelembapan (%)',
+            data: [],
+            borderColor: '#2e7d32',
+            backgroundColor: 'rgba(46, 125, 50, 0.1)',
+            tension: 0.4,
+            fill: true
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              max: 100
+            }
+          }
+        }
+      });
+
+      // Grafik Kecerahan
+      const luxCtx = document.getElementById('luxChart').getContext('2d');
+      luxChart = new Chart(luxCtx, {
+        type: 'bar',
+        data: {
+          labels: [],
+          datasets: [{
+            label: 'Kecerahan (lux)',
+            data: [],
+            backgroundColor: 'rgba(255, 193, 7, 0.7)',
+            borderColor: '#ffc107',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: true,
+          plugins: {
+            legend: {
+              display: true,
+              position: 'top'
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      });
+    }
+
+    function updateCharts(data) {
+      if (!data || data.length === 0) return;
+
+      // Ambil maksimal 10 data terakhir untuk grafik
+      const maxDataPoints = 10;
+      const recentData = data.slice(-maxDataPoints);
+
+      // Update labels dan data
+      const labels = recentData.map(d => {
+        const time = new Date(d.timestamp);
+        return time.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+      });
+      
+      const suhuData = recentData.map(d => parseFloat(d.suhu));
+      const humidityData = recentData.map(d => parseFloat(d.humidity));
+      const luxData = recentData.map(d => parseFloat(d.lux));
+
+      // Update Grafik Suhu
+      suhuChart.data.labels = labels;
+      suhuChart.data.datasets[0].data = suhuData;
+      suhuChart.update('none');
+
+      // Update Grafik Kelembapan
+      humidityChart.data.labels = labels;
+      humidityChart.data.datasets[0].data = humidityData;
+      humidityChart.update('none');
+
+      // Update Grafik Kecerahan
+      luxChart.data.labels = labels;
+      luxChart.data.datasets[0].data = luxData;
+      luxChart.update('none');
+    }
+
+    async function ambilData() {
+      try {
+        const res = await fetch('/data');
+        const json = await res.json();
+
+        // Update nilai suhu max, min, rata-rata
+        document.getElementById('maxSuhu').textContent = json.suhumax;
+        document.getElementById('minSuhu').textContent = json.suhumin;
+        document.getElementById('rataSuhu').textContent = json.suhusrata;
+
+        // Update tabel data sensor
+        const tbody = document.getElementById('dataTable');
+        tbody.innerHTML = '';
+
+        if (json.nilai_suhu_max_humid_max) {
+          json.nilai_suhu_max_humid_max.forEach(d => {
+            tbody.innerHTML += `
+              <tr>
+                <td>${d.id}</td>
+                <td>${d.suhu}</td>
+                <td>${d.humidity}</td>
+                <td>${d.lux}</td>
+                <td>${d.timestamp}</td>
+              </tr>
+            `;
+          });
+          
+          // Update grafik dengan data terbaru
+          updateCharts(json.nilai_suhu_max_humid_max);
+        }
+      } catch (err) {
+        console.error("❌ Gagal mengambil data:", err);
+      }
+    }
+
+    async function kontrolPompa(state) {
+      const res = await fetch(`/pompa/${state}`);
+      const text = await res.text();
+      alert(text);
+    }
+
+    // Inisialisasi saat halaman dimuat
+    window.addEventListener('load', () => {
+      initCharts();
+      ambilData();
+      setInterval(ambilData, 5000); // refresh setiap 5 detik
+    });
+  </script>
+</body>
+</html>
